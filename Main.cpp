@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <string>
 #include <fstream>
+#include <ctime>
 using namespace std;
 
 int takeInput(int, int);
@@ -12,19 +13,20 @@ void ClearScreen() {
 struct Student {
 	int id;
 	string name;
+	string dept;
 	int bill;
 };
 
 Student* studentsList;
 int numOfStudents;
-const string FILENAME = "data.txt";
+const string FILENAME = "data.csv";
 
 void saveStudentsInFile() {
 	ofstream file(FILENAME);
 
 	for (int i = 0; i < numOfStudents; i++) {
 		Student student = studentsList[i];
-		file << student.id << "," << student.name << "," << student.bill << ","<< endl;
+		file << student.id << "," << student.name << "," << student.dept << "," << student.bill << "," << endl;
 	}
 
 	file.close();
@@ -66,6 +68,9 @@ void loadStudentsFromFile(){
 					student.name = line.substr(start, i-start);
 				}
 				else if (pos == 2) {
+					student.dept = line.substr(start, i - start);
+				}
+				else if (pos == 3) {
 					student.bill = stoi(line.substr(start, i-start));
 				}
 				start = i + 1;
@@ -136,29 +141,100 @@ void markAttendance() {
 		}
 	}
 
+	time_t now = time(nullptr);
+	tm tm;
+	localtime_s(&tm, &now);
+	string date = to_string(tm.tm_mday) + "-" + to_string(tm.tm_mon + 1) + "-" + to_string(1900 + tm.tm_year);
+
+	for (int i = 0; i < numOfStudents; i++) {
+		if (attendence[i]) {
+			ofstream file("record/" + to_string(studentsList[i].id) + ".txt", ios_base::app);
+			file << date << " - " << messPrice << endl;
+		}
+	}
+
+
 	saveStudentsInFile();
 }
 
 void viewRecord() {
 
-	cout << "   ------------------------------------------" << endl;
-	cout << "  |                 View Record              |" << endl;
-	cout << "   ------------------------------------------" << endl;
-	cout << endl;
+	while (true) {
+		ClearScreen();
+		cout << "   ------------------------------------------" << endl;
+		cout << "  |                 View Record              |" << endl;
+		cout << "   ------------------------------------------" << endl;
+		cout << endl;
 
-	cout << "  ID | NAME           | BILL" << endl;
+		cout << "  ID | NAME           | BILL" << endl;
 
-	for (int i = 0; i < numOfStudents; i++) {
-		Student student = studentsList[i];
-		cout << "  ";
-		cout << left << setw(2) << student.id << " | " << setw(15) << student.name << "| " << student.bill << endl;
+		for (int i = 0; i < numOfStudents; i++) {
+			Student student = studentsList[i];
+			cout << "  ";
+			cout << left << setw(2) << student.id << " | " << setw(15) << student.name << "| " << student.bill << endl;
+		}
+
+		int response;
+		cout << "\nEnter Student ID:";
+		cin >> response;
+		if (response == 0) {
+			break;
+		}
+
+		ClearScreen();
+		ifstream file("record/" + to_string(response) + ".txt");
+
+		string line;
+		while (getline(file, line)) {
+			cout << line << endl;
+		}
+
+
+		cout << "\nEnter 0 to exit: ";
+		int res; cin >> res;
+
 	}
+	
 
-	int response;
-	cin >> response;
+}
+
+void removeStudent() {
+
 }
 
 void addRemoveStudent() {
+
+a:
+	int choice;
+	cout << "Enter 1 for adding record\nEnter 2 for remove recore" << endl;
+	cin >> choice;
+	if (choice == 1) {
+		int n;
+		cout << "How many students want to add:";
+		cin >> n;
+		Student* student = new Student[n];
+		for (int i = 0; i < n; i++) {
+			cout << "ID:";
+			cin >> student[i].id;
+			if (student[i].id == -1)
+				goto a;
+
+			cout << "Name:";
+			cin >> student[i].name;
+
+			cout << "Department Name:";
+			cin >> student[i].dept;
+		}
+	}
+
+	else if (choice == 2) {
+		int studentsList[5] = { 4,5,6,2,3 };
+		int key;
+		cout << "Enter a ID which you want to remove:";
+		cin >> key;
+	}
+
+	
 }
 
 int main()
