@@ -6,9 +6,6 @@
 #include <string>
 using namespace std;
 
-int takeInput(int, int);
-void ClearScreen() { cout << "\033[2J\033[1;1H"; }
-
 struct Student {
   int id;
   string name;
@@ -20,6 +17,27 @@ struct Student {
 Student *studentsList;
 int numOfStudents;
 const string FILENAME = "data.csv";
+
+void ClearScreen() { cout << "\033[2J\033[1;1H"; }
+
+int takeInput(int start, int end) {
+  int option;
+  while (true) {
+    cout << "Select: ";
+    cin >> option;
+    if (cin && option > start && option < end) {
+      return option;
+    } else {
+      // remove two lines from console
+      cout << "\033[2A\033[3K";
+      cout << option << " is not a valid option." << endl;
+      // This clear previous entered value from cin buffer
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+  }
+  return 0;
+}
 
 int countLines(string FILENAME) {
   ifstream file(FILENAME);
@@ -61,7 +79,6 @@ void loadStudentsFromFile() {
     int pos = 0;
     Student student;
     while (line[i]) {
-      cout << line[i];
       if (line[i] == ',') {
         if (pos == 0) {
           student.id = stoi(line.substr(start, i - start));
@@ -136,17 +153,20 @@ void markAttendance() {
     }
   }
 
-   time_t now = time(nullptr);
-    tm tm = *localtime(&now);
-    string date;
-    date =  to_string(tm.tm_mday) + "-" + to_string((
-      tm.tm_mon + 1)) + "-" + to_string((tm.tm_year + 1900));
+  // Getting today date
+  time_t now = time(nullptr);
+  tm tm = *localtime(&now);
+  string date;
+  date = to_string(tm.tm_mday) + "-" + to_string((tm.tm_mon + 1)) + "-" +
+         to_string((tm.tm_year + 1900));
 
+  // Saving all present student record in file
   for (int i = 0; i < numOfStudents; i++) {
     if (attendence[i]) {
       ofstream file("record/" + to_string(studentsList[i].id) + ".txt",
                     ios_base::app);
       file << date << " - " << messPrice << endl;
+      file.close();
     }
   }
 
@@ -192,38 +212,74 @@ void viewRecord() {
   }
 }
 
-void removeStudent() {}
-
-void addRemoveStudent() {
-
-a:
-  int choice;
-  cout << "Enter 1 for adding record\nEnter 2 for remove recore" << endl;
-  cin >> choice;
-  if (choice == 1) {
-    int n;
-    cout << "How many students want to add:";
-    cin >> n;
-    Student *student = new Student[n];
-    for (int i = 0; i < n; i++) {
-      cout << "ID:";
-      cin >> student[i].id;
-      if (student[i].id == -1)
-        goto a;
-
-      cout << "Name:";
-      cin >> student[i].name;
-
-      cout << "Department Name:";
-      cin >> student[i].dept;
-    }
+void addStudent() {
+  Student *students;
+  int n;
+  cout << "How many student want to add?";
+  cin >> n;
+  students = new Student[n];
+  for (int i = 0; i < n; i++) {
+    cout << "Student " << i + 1 << ": " << endl;
+    cout << "Enter ID: ";
+    cin >> students[i].id;
+    if (students[i].id == -1)
+      break;
+    cout << "Enter Name: ";
+    cin >> students[i].name;
+    cout << "Enter Department: ";
+    cin >> students[i].dept;
+    students[i].bill = 0;
   }
+  ofstream file(FILENAME, ios_base::app);
+  for (int i = 0; i < n; i++) {
 
-  else if (choice == 2) {
-    int studentsList[5] = {4, 5, 6, 2, 3};
-    int key;
-    cout << "Enter a ID which you want to remove:";
-    cin >> key;
+    if (students[i].id == -1) {
+      break;
+    }
+    file << students[i].id << "," << students[i].name << "," << students[i].dept
+         << "," << students[i].bill << "," << endl;
+    loadStudentsFromFile();
+  }
+  file.close();
+  int response;
+  cout << "Record added successfully." << endl;
+  cout << "Press 0 to exit";
+  cin >> response;
+}
+
+void removeStudent() {
+  while (true){
+    int id;
+
+    cout << "Enter 0 to exit\n";
+    cout << "Enter ID to remove: ";
+    cin >> id;
+
+    if (id==0){
+      return;
+    }
+  
+    int index = -1;
+    for (int i = 0; i < numOfStudents; i++) {
+      if (studentsList[i].id == id) {
+        index = i;
+        break;
+      }
+    }
+  
+    if (index == -1) {
+      cout << "Record not found." << endl;
+    }
+    else{
+      for (int i = index; i < numOfStudents - 1; i++) {
+        studentsList[i] = studentsList[i + 1];
+      }
+    
+      numOfStudents--;
+    
+      saveStudentsInFile();
+      ClearScreen();
+    }
   }
 }
 
@@ -241,45 +297,28 @@ int main() {
 
     cout << "  1. Mark Attendance" << endl;
     cout << "  2. View Record" << endl;
-    cout << "  3. Add / Remove Student" << endl;
-    cout << "  4. Quit" << endl;
+    cout << "  3. Add Student" << endl;
+    cout << "  4. Remove Student" << endl;
+    cout << "  5. Quit" << endl;
     cout << endl << endl;
 
-    int option = takeInput(0, 5);
+    int option = takeInput(0, 6);
 
     ClearScreen();
 
     if (option == 1) {
       markAttendance();
     }
-
     else if (option == 2) {
       viewRecord();
     }
-
     else if (option == 3) {
-      addRemoveStudent();
+      addStudent();
     } else if (option == 4) {
+      removeStudent();
+    }
+    else if( option == 5) {
       break;
     }
   }
-}
-
-int takeInput(int start, int end) {
-  int option;
-  while (true) {
-    cout << "Select: ";
-    cin >> option;
-    if (cin && option > start && option < end) {
-      return option;
-    } else {
-      // remove old line
-      cout << "\033[2A\033[3K";
-      cout << option << " is not a valid option." << endl;
-      // This clear previous entered value from cin buffer
-      cin.clear();
-      cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-  }
-  return 0;
 }
