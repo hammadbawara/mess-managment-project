@@ -136,7 +136,11 @@ void markAttendance() {
     }
   }
 
-  string date = "13-3-2023";
+  time_t now = time(nullptr);
+  tm tm;
+  localtime_s(&tm, &now);
+  string date = to_string(tm.tm_mday) + "-" + to_string(tm.tm_mon + 1) + "-" +
+                to_string(1900 + tm.tm_year);
 
   for (int i = 0; i < numOfStudents; i++) {
     if (attendence[i]) {
